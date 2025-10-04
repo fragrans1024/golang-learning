@@ -29,3 +29,6 @@ func main() {
 // curl --http2-prior-knowledge http://127.0.0.1:8080
 // curl --http2                 http://127.0.0.1:8080
 // curl                         http://127.0.0.1:8080
+
+// https://www.jianshu.com/p/ff16b0308e7c提及http2.ConfigureServer
+// 不再尝试
