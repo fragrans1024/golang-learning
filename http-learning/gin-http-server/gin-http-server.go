@@ -63,8 +63,8 @@ func ping_v1(c *gin.Context) {
 }
 
 type Info struct {
-	Name string `json:"name" binding:"required,prefix"`
-	Age  uint32 `json:"age" binding:"required,min=18"`
+	Name string `json:"name" binding:"required,prefix" validate:"required,prefix"`
+	Age  uint32 `json:"age" binding:"required,min=18" validate:"required,min=18"`
 }
 
 // curl -X POST  http://127.0.0.1:9001/v1/info -H "Content-Type: application/json" -d '{"name", "abc", "age": 13}'
@@ -101,11 +101,6 @@ func ping_v2(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
-type InfoV2 struct {
-	Name string `json:"name" validate:"required,prefix"`
-	Age  uint32 `json:"age" validate:"required,min=18"`
-}
-
 // curl -X POST  http://127.0.0.1:9001/v1/info -H "Content-Type: application/json" -d '{"name", "abc", "age": 13}'
 func info_v2(c *gin.Context) {
 	requestBody, err := c.GetRawData()
@@ -115,7 +110,7 @@ func info_v2(c *gin.Context) {
 		return
 	}
 
-	var info InfoV2
+	var info Info
 	if err := json.Unmarshal(requestBody, &info); err != nil {
 		log.Printf("2 - err = %v\n", err)
 		c.JSON(400, gin.H{"error": err.Error()})
