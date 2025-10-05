@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"strings"
 
@@ -41,6 +42,7 @@ func gin_group() *gin.Engine {
 
 	router_v2 := router.Group("v2")
 	router_v2.GET("/ping", ping_v2)
+	router_v2.POST("/info", info_v2)
 
 	return router
 }
@@ -97,4 +99,39 @@ func ping_v2(c *gin.Context) {
 		"version": "v2",
 	}
 	c.JSON(200, resp)
+}
+
+type InfoV2 struct {
+	Name string `json:"name" validate:"required,prefix"`
+	Age  uint32 `json:"age" validate:"required,min=18"`
+}
+
+// curl -X POST  http://127.0.0.1:9001/v1/info -H "Content-Type: application/json" -d '{"name", "abc", "age": 13}'
+func info_v2(c *gin.Context) {
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		log.Printf("err = %v\n", err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	var info InfoV2
+	if err := json.Unmarshal(requestBody, &info); err != nil {
+		log.Printf("2 - err = %v\n", err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	validator := validator.New()
+	validator.RegisterValidation("prefix", prefix)
+
+	if err := validator.Struct(info); err != nil {
+		log.Printf("err = %v\n", err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	log.Printf("%+v", info)
+
+	c.JSON(204, nil)
 }
