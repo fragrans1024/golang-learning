@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"log"
+
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
 	r := gin_group()
@@ -23,6 +27,8 @@ func gin_group() *gin.Engine {
 	router := gin.New()
 
 	router_v1 := router.Group("v1")
+	router_v1.Use(gin.Logger(), gin.Recovery())
+	router_v1.Use(middleware_v1)
 	router_v1.GET("/ping", ping_v1)
 
 	router_v2 := router.Group("v2")
@@ -31,7 +37,14 @@ func gin_group() *gin.Engine {
 	return router
 }
 
+func middleware_v1(c *gin.Context) {
+	log.Println("begin middle ware v1")
+	c.Next()
+	log.Println("end middle ware v1")
+}
+
 func ping_v1(c *gin.Context) {
+	log.Println("process ping v1")
 	resp := gin.H{
 		"message": "pong",
 		"version": "v1",
