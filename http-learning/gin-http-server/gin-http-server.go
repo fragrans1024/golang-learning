@@ -54,15 +54,16 @@ func ping_v1(c *gin.Context) {
 }
 
 type Info struct {
-	Name string `json:"name"`
-	Age  uint32 `json:"age"`
+	Name string `json:"name" binding:"required"`
+	Age  uint32 `json:"age" binding:"required,min=18"`
 }
 
+// curl -X POST  http://127.0.0.1:9001/v1/info -H "Content-Type: application/json" -d '{"name", "abc", "age": 13}'
 func info_v1(c *gin.Context) {
 	var info Info
 	if err := c.ShouldBindBodyWithJSON(&info); err != nil {
 		log.Printf("err = %v\n", err)
-		c.JSON(400, err)
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 	log.Printf("%+v", info)
