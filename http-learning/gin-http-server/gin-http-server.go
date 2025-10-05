@@ -2,8 +2,11 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
 func main() {
@@ -25,6 +28,10 @@ func gin_default() *gin.Engine {
 // 分组路由
 func gin_group() *gin.Engine {
 	router := gin.New()
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("prefix", prefix)
+	}
 
 	router_v1 := router.Group("v1")
 	router_v1.Use(gin.Logger(), gin.Recovery())
@@ -54,7 +61,7 @@ func ping_v1(c *gin.Context) {
 }
 
 type Info struct {
-	Name string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required,prefix"`
 	Age  uint32 `json:"age" binding:"required,min=18"`
 }
 
@@ -69,6 +76,19 @@ func info_v1(c *gin.Context) {
 	log.Printf("%+v", info)
 
 	c.JSON(204, nil)
+}
+
+var prefix validator.Func = func(field validator.FieldLevel) bool {
+	str, ok := field.Field().Interface().(string)
+	if !ok {
+		return false
+	}
+	if strings.HasPrefix(str, "abc") {
+		return true
+	} else {
+		log.Printf("%s is not prefix with abc", str)
+		return false
+	}
 }
 
 func ping_v2(c *gin.Context) {
