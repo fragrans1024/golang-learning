@@ -30,6 +30,7 @@ func gin_group() *gin.Engine {
 	router_v1.Use(gin.Logger(), gin.Recovery())
 	router_v1.Use(middleware_v1)
 	router_v1.GET("/ping", ping_v1)
+	router_v1.POST("/info", info_v1)
 
 	router_v2 := router.Group("v2")
 	router_v2.GET("/ping", ping_v2)
@@ -50,6 +51,23 @@ func ping_v1(c *gin.Context) {
 		"version": "v1",
 	}
 	c.JSON(200, resp)
+}
+
+type Info struct {
+	Name string `json:"name"`
+	Age  uint32 `json:"age"`
+}
+
+func info_v1(c *gin.Context) {
+	var info Info
+	if err := c.ShouldBindBodyWithJSON(&info); err != nil {
+		log.Printf("err = %v\n", err)
+		c.JSON(400, err)
+		return
+	}
+	log.Printf("%+v", info)
+
+	c.JSON(204, nil)
 }
 
 func ping_v2(c *gin.Context) {
