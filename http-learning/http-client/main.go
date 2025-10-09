@@ -1,17 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/http/httptrace"
 )
 
 func main() {
-	// http.Get使用var DefaultClient = &Client{}
-	// DefaultClient未定义Transport，使用DefaultTransport
-	// DefaultTransport显示开启TCP keepalive，并调整了参数
-	// DefaultTransport未定义DisableKeepAlives，则为false，request/response后，保留TCP连接
-	resp, err := http.Get("http://127.0.0.1:9001")
+	resp, err := http_client_with_trace()
 	if err != nil {
 		log.Println("http.Get fail, err =", err)
 		return
@@ -27,6 +25,16 @@ func main() {
 	log.Println(string(body))
 }
 
+func http_default_client() (resp *http.Response, err error) {
+	// http.Get使用var DefaultClient = &Client{}
+	// DefaultClient未定义Transport，使用DefaultTransport
+	// DefaultTransport显示开启TCP keepalive，并调整了参数
+	// DefaultTransport未定义DisableKeepAlives，则为false，request/response后，保留TCP连接
+	resp, err = http.Get("http://127.0.0.1:9001")
+
+	return resp, err
+}
+
 // go build -gcflags="all=-N -l"
 // 显示设置client
 // 显示设置Transport
@@ -38,3 +46,22 @@ func main() {
 
 // request/response后，不保留TCP连接的方法
 // https://blog.csdn.net/cyberspecter/article/details/83308348
+
+// https://pkg.go.dev/net/http/httptrace#example-package
+func http_client_with_trace() (resp *http.Response, err error) {
+	req, _ := http.NewRequest("GET", "http://127.0.0.1:9001", nil)
+
+	trace := &httptrace.ClientTrace{
+		GotConn: func(connInfo httptrace.GotConnInfo) {
+			fmt.Printf("Got Conn %+v\n", connInfo)
+		},
+		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
+			fmt.Printf("DNS info: %+v\n", dnsInfo)
+		},
+	}
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+
+	resp, err = http.DefaultTransport.RoundTrip(req)
+
+	return resp, err
+}
